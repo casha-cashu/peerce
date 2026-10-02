@@ -1,0 +1,9 @@
+/target/
+worker/node_modules/
+worker/.wrangler/
+worker/dist/
+.env
+.env.*
+!.env.example
+*.orig
+*.rej

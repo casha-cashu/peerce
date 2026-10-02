@@ -1,0 +1,21 @@
+[package]
+name = "peerce"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+bip39 = "2"
+blake3 = "1"
+clap = { version = "4", features = ["derive"] }
+indicatif = "0.17"
+quinn = { version = "0.11", features = ["rustls-ring"] }
+rand = "0.8"
+rcgen = "0.13"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rustls = { version = "0.23", features = ["ring"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tar = "0.4"
+tokio = { version = "1", features = ["full"] }
+zstd = "0.13"
