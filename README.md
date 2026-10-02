@@ -8,12 +8,12 @@ QUIC (`quinn`, TLS 1.3) over UDP, `tar` + `zstd` streaming, `BLAKE3` integrity,
 
 ```bash
 # Send file or folder (compressed by default). Prints a pairing code.
-peerce send ./dataset --signal https://peerce-signal.<you>.workers.dev
+peerce send ./dataset --signal https://peerce-signal.tmisa7398.workers.dev
 # -> Pairing code: orbit-falcon-neon
 # -> Waiting for peer... Connected!
 
 # Receive
-peerce get orbit-falcon-neon --signal https://peerce-signal.<you>.workers.dev --out .
+peerce get orbit-falcon-neon --signal https://peerce-signal.tmisa7398.workers.dev --out .
 # -> receiving: dataset [dir]
 
 # Options
@@ -27,18 +27,17 @@ peerce rendezvous --bind 127.0.0.1:9500  # local signaling stub (same HTTP API a
 peerce route 8.8.8.8                     # check egress: direct or via VPN
 ```
 
-## No-incy rule
+## Direct route (no VPN tunnel)
 
-Bulk P2P traffic and STUN must NOT go through the `tun_incy` VPN:
+Bulk P2P traffic and STUN must NOT go through a VPN tunnel:
 
 - The CLI auto-binds to the physical interface IP (ignores `tun_*`, `tailscale*`,
-  `198.18/15`, `100.64/10`). Override with `--bind-ip`.
+  `wg*`, carrier-grade NAT ranges). Override with `--bind-ip`.
 - Before connecting, the CLI checks `ip route get <peer>`. If the route goes via
-  `tun_incy`, it aborts and prints the exact bypass command:
+  a tunnel, it aborts and prints the exact bypass command:
   `sudo ip route add <peer>/32 via <gw> dev <iface>`.
   Override with `--via-vpn` (not recommended for data).
-- Private LAN ranges already bypass the tunnel (`geoip:private → direct` in xray,
-  plus the host route `192.168.0.0/24 via 192.168.1.1`).
+- Private LAN ranges normally bypass tunnels automatically.
 - Signaling (HTTPS to the Worker) may go via VPN. Only STUN + QUIC data stay direct.
 
 ## Firewall

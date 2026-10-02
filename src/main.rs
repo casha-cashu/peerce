@@ -189,7 +189,7 @@ fn ensure_direct_path(peer: SocketAddr, via_vpn: bool) -> Result<()> {
         _ => {
             let hint = net_bypass::bypass_command(&peer.ip().to_string())
                 .unwrap_or_else(|_| "sudo ip route add <peer>/32 via <gw>".to_string());
-            anyhow::bail!("peer route goes via VPN (incy). refusing.\nrun: {hint}\nor retry with --via-vpn to override")
+            anyhow::bail!("peer route goes via VPN tunnel. refusing.\nrun: {hint}\nor retry with --via-vpn to override")
         }
     }
 }
@@ -226,7 +226,7 @@ async fn reflexive_addr(
 
 async fn cmd_send(o: SendOpt) -> Result<()> {
     let bind_ip = resolve_bind_ip(&o.bind_ip)?;
-    println!("bind: {bind_ip} (incy bypassed)");
+    println!("bind: {bind_ip} (direct)");
     if let Some(addr) = o.direct {
         return direct_send(&o.path, addr, &bind_ip, o.peer_fp, o.raw_v1, o.compress).await;
     }
@@ -317,7 +317,7 @@ struct GetOpt {
 async fn cmd_get(o: GetOpt) -> Result<()> {
     let code = code::normalize(&o.raw_code)?;
     let bind_ip = resolve_bind_ip(&o.bind_ip_flag)?;
-    println!("bind: {bind_ip} (incy bypassed)");
+    println!("bind: {bind_ip} (direct)");
     let (cert_der, key_der) = cert::generate()?;
     let fp_hex = cert::fingerprint_hex(&cert_der);
     let (reflexive, port) = reflexive_addr(&bind_ip, &o.stun_server, o.no_stun, o.fixed_port).await?;
@@ -394,7 +394,7 @@ fn cmd_route(ip: &str) -> Result<()> {
         println!("via VPN. bypass:");
         println!("  {}", net_bypass::bypass_command(ip)?);
     } else {
-        println!("direct, incy bypassed.");
+        println!("direct, no VPN.");
     }
     Ok(())
 }

@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use std::net::IpAddr;
 use std::process::Command;
 
-const TUN_PREFIXES: &[&str] = &["tun_", "tailscale", "wg", "tunincy"];
+const TUN_PREFIXES: &[&str] = &["tun_", "tailscale", "wg"];
 const TUN_NETS: &[&str] = &["198.18.", "100.64.", "10.255.", "127."];
 
 pub fn is_tunnel_iface(name: &str, ip: &str) -> bool {
@@ -111,9 +111,9 @@ pub fn route_egress(ip: &str) -> Result<String> {
 }
 
 pub fn goes_via_tunnel(route_get_out: &str) -> bool {
-    route_get_out.contains("tun_incy")
+    route_get_out.contains(" tun")
+        || route_get_out.contains("tun_")
         || route_get_out.contains("tailscale")
-        || route_get_out.contains("tun]")
         || route_get_out.contains("198.18.0.1")
 }
 
@@ -133,7 +133,7 @@ mod tests {
 
     const SAMPLE_ADDR: &str = "1: lo    inet 127.0.0.1/8 scope host lo\n\
         2: enp59s0u1u1    inet 192.168.1.189/24 brd 192.168.1.255 scope global dynamic noprefixroute enp59s0u1u1\n\
-        8: tun_incy    inet 198.18.0.1/16 brd 198.18.255.255 scope global tun_incy\n";
+        8: tun0    inet 198.18.0.1/16 brd 198.18.255.255 scope global tun0\n";
 
     #[test]
     fn picks_physical_not_tunnel() {
@@ -153,9 +153,7 @@ mod tests {
 
     #[test]
     fn detects_tunnel_egress() {
-        assert!(goes_via_tunnel(
-            "8.8.8.8 dev tun_incy table 100 src 198.18.0.1"
-        ));
+        assert!(goes_via_tunnel("8.8.8.8 dev tun0 table 100 src 198.18.0.1"));
         assert!(!goes_via_tunnel(
             "192.168.0.108 via 192.168.1.1 dev enp59s0u1u1 src 192.168.1.189"
         ));
@@ -163,7 +161,7 @@ mod tests {
 
     #[test]
     fn tunnel_iface_filter() {
-        assert!(is_tunnel_iface("tun_incy", "198.18.0.1"));
+        assert!(is_tunnel_iface("tun0", "198.18.0.1"));
         assert!(is_tunnel_iface("tailscale0", "100.100.1.2"));
         assert!(is_tunnel_iface("lo", "127.0.0.1"));
         assert!(!is_tunnel_iface("enp59s0u1u1", "192.168.1.189"));
