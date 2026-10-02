@@ -4,6 +4,25 @@ Direct P2P file/folder transfer over the internet. No clouds, no relays for data
 QUIC (`quinn`, TLS 1.3) over UDP, `tar` + `zstd` streaming, `BLAKE3` integrity,
 3-word pairing codes, Cloudflare Worker rendezvous, STUN NAT discovery.
 
+## Install (Linux x86_64)
+
+```bash
+# pick the newest binary your distro can run:
+# - glibc >= 2.39 (Ubuntu 24.04+, Fedora 39+, Arch): peerce-v0.1.0-linux-x86_64
+# - glibc >= 2.35 (Ubuntu 22.04+, Debian 12+):      peerce-v0.1.0-linux-x86_64-glibc235
+curl -LO https://github.com/casha-cashu/peerce/releases/download/v0.1.0/peerce-v0.1.0-linux-x86_64
+chmod +x peerce-v0.1.0-linux-x86_64
+sudo mv peerce-v0.1.0-linux-x86_64 /usr/local/bin/peerce
+
+# receiver: allow one UDP port through the firewall
+sudo ufw allow 4000/udp   # then use --port 4000 on both sides
+```
+
+Needs: Linux x86_64, UDP out, one reachable UDP port on the receiver.
+`iproute2` optional (without it pass `--bind-ip <your-LAN-ip>`).
+Windows/macOS: not yet — the route watcher shells out to Linux `ip`;
+`cargo build --release` compiles, but bind/route detection needs porting.
+
 ## CLI
 
 ```bash

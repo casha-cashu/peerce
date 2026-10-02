@@ -96,9 +96,31 @@ fn run_ip(args: &[&str]) -> Result<String> {
 }
 
 pub fn physical_ip() -> Result<String> {
-    let out = run_ip(&["-o", "-4", "addr", "show"])?;
-    let addrs = parse_ip_addr_output(&out);
-    pick_physical_ip(&addrs).context("no physical IPv4 found")
+    if let Ok(out) = run_ip(&["-o", "-4", "addr", "show"]) {
+        if let Some(ip) = pick_physical_ip(&parse_ip_addr_output(&out)) {
+            return Ok(ip);
+        }
+    }
+    fallback_egress_ip()
+}
+
+pub fn is_tunnel_ip(ip: &str) -> bool {
+    ip.starts_with("127.")
+        || ip.starts_with("198.18.")
+        || ip.starts_with("198.19.")
+        || ip.starts_with("100.64.")
+        || ip.starts_with("10.255.")
+}
+
+fn fallback_egress_ip() -> Result<String> {
+    let sock = std::net::UdpSocket::bind("0.0.0.0:0").context("udp bind")?;
+    sock.connect("1.1.1.1:80").context("udp connect")?;
+    let ip = sock.local_addr()?.ip().to_string();
+    anyhow::ensure!(
+        !is_tunnel_ip(&ip),
+        "egress {ip} looks like a tunnel; install iproute2 or pass --bind-ip"
+    );
+    Ok(ip)
 }
 
 pub fn default_gateway() -> Result<(String, String)> {
@@ -165,5 +187,13 @@ mod tests {
         assert!(is_tunnel_iface("tailscale0", "100.100.1.2"));
         assert!(is_tunnel_iface("lo", "127.0.0.1"));
         assert!(!is_tunnel_iface("enp59s0u1u1", "192.168.1.189"));
+    }
+
+    #[test]
+    fn tunnel_ip_filter() {
+        assert!(is_tunnel_ip("198.18.0.1"));
+        assert!(is_tunnel_ip("100.64.0.5"));
+        assert!(is_tunnel_ip("127.0.0.1"));
+        assert!(!is_tunnel_ip("192.168.1.189"));
     }
 }
